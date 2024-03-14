@@ -52,11 +52,11 @@ class AppCubit extends Cubit<AppState> {
   Future<UserCredential> Register(
       {
         required String email,
-      required String password,
-      required String name,
-      required String phone,
-       String? image,
-      required String title
+        required String password,
+        required String name,
+        required String phone,
+        String? image,
+        required String title
       }) async {
     try {
       emit(RegisterLoading());
@@ -101,27 +101,32 @@ class AppCubit extends Cubit<AppState> {
   }
 
 
-  Stream<QuerySnapshot> getTasks(String UserId, otherUserId) {
-    List<String> ids = [UserId, otherUserId];
+  // Stream<QuerySnapshot> getTasks(String UserId, otherUserId) {
+  //   List<String> ids = [UserId, otherUserId];
+  //
+  //   ids.sort();
+  //   String ChatRoomId = ids.join('_');
+  //   return database
+  //       .collection('tasks_rooms')
+  //       .doc(ChatRoomId)
+  //       .collection('tasks')
+  //       .orderBy('name', descending: false)
+  //       .snapshots();
+  // }
+
+
+  Stream<QuerySnapshot> getTasksStream(String UserId, otherUserId) {
+    List<String> ids = [ UserId , otherUserId];
+
 
     ids.sort();
-    String ChatRoomId = ids.join('_');
+    String taskRoomId = ids.join('_');
+
     return database
-        .collection('chat_rooms')
-        .doc(ChatRoomId)
+        .collection('tasks_rooms')
+        .doc(taskRoomId)
         .collection('tasks')
-        .orderBy('deadline', descending: false)
         .snapshots();
-  }
-
-
-  Stream<List<Map<String, dynamic>>> getTasksListStream() {
-    return database.collection('tasks').snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final task = doc.data();
-        return task;
-      }).toList();
-    });
   }
 
   Future<void> sendTask(
@@ -131,7 +136,6 @@ class AppCubit extends Cubit<AppState> {
         required String title,
         required String description,
         required String deadline,
-        required String image,
         required String senderName,
         required String senderPhone,
         required String taskName,
@@ -146,46 +150,61 @@ class AppCubit extends Cubit<AppState> {
     final String currentUserId = auth.currentUser!.uid;
     final String email = auth.currentUser!.email!;
     final Timestamp timeStamp = Timestamp.now();
-   Tasks tasks = Tasks(
+    Tasks tasks = Tasks(
 
-       name: taskName,
+        name: taskName,
 
-       id: taskId,
-       senderId: senderID,
-       senderEmail: email,
-       senderName: senderName,
-       senderPhoneNumber: senderPhone,
-       receiverId: receiverID,
-       description: description,
-       date: timeStamp.toString(),
-       deadline: deadline,
-       status: 'to do',
-       priority: priority
-   );
+        id: taskId,
+        senderId: senderID,
+        senderEmail: email,
+        senderName: senderName,
+        senderPhoneNumber: senderPhone,
+        receiverId: receiverID,
+        description: description,
+        date: timeStamp.toString(),
+        deadline: deadline,
+        status: 'to do',
+        priority: priority
+    );
 
 
     List<String> ids = [currentUserId, receiverID];
     ids.sort();
-    String ChatRoomId = ids.join('_');
+    String taskRoomId = ids.join('_');
     await database
         .collection("tasks_rooms")
-        .doc(ChatRoomId)
+        .doc(taskRoomId)
         .collection('tasks')
         .add(tasks.task())
         .then((value) {
       tasksList.add(value);
-      print(tasks);
+      print('task name is${tasks.name}');
       emit(SendTaskSuccess());
     }).catchError((onError) {
       emit(SendTaskFailed());
+      print('error');
       print(onError.toString());
     });
   }
 
   List<Widget> pagesNames = [
-    const HomeScreen(),
+    const HomeScreen(ReceiverId: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',),
     CalenderScreen(),
     const NotificationScreen(),
     const ProfileScreen(),
   ];
+
+  //hello
 }
+
+
+// Stream<List<Map<String, dynamic>>> getTasksListStream() {
+//   return database.collection('tasks_rooms').snapshots().map((snapshot) {
+//     return snapshot.docs.map((doc) {
+//       final task = doc.data();
+//       print(task);
+//       return task;
+//     }).toList();
+//   });
+// }
+
