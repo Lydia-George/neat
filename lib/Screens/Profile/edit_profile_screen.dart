@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:neat/Screens/Profile/widgets/profile_menu.dart';
 import 'package:neat/utlis/constants/sizes.dart';
-
 import '../../common/widgets/appbar/appbar.dart';
 import '../../common/widgets/images/circular_image.dart';
 import '../../common/widgets/texts/section_heading.dart';
@@ -12,13 +12,18 @@ class EditProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: TColors.backgroundColor,
       appBar: TAppBar(
+        showBackArrow: true,
         backgroundColor: TColors.backgroundColor,
+        leadingOnPressed: (){
+          Navigator.pop(context);
+        },
         title: Text("Profile",style: Theme.of(context).textTheme.headlineLarge!.apply(color: TColors.primaryColor,),),
 
       ),
       body: SingleChildScrollView(
-        child: Padding(padding: EdgeInsets.all(TSizes.defaultSpace),
+        child: Padding(padding: const EdgeInsets.all(TSizes.defaultSpace),
         child: Column(
           children: [
             SizedBox(
@@ -32,15 +37,31 @@ class EditProfileScreen extends StatelessWidget {
               ),
             ),
             /// Details
-            SizedBox(
+            const SizedBox(
               height: TSizes.spaceBtwItems,
             ),
-            Divider(),
-            SizedBox(height: TSizes.spaceBtwItems,),
+            const Divider(color: TColors.secondaryColor,),
+            const SizedBox(height: TSizes.spaceBtwItems,),
 
             /// Heading Profile Info
-            TSectionHeading(title: "Profile Info",showActionButton: false, textColor: TColors.primaryColor,),
-            SizedBox(height: TSizes.spaceBtwItems,),
+            const TSectionHeading(title: "Profile Information",showActionButton: false, textColor: TColors.primaryColor,),
+            const SizedBox(height: TSizes.spaceBtwItems,),
+
+            TProfileMenu(onPressed: (){}, title: "Name", value: "Username"),
+            TProfileMenu(onPressed: (){}, title: "Username", value: "Username@gmail.com"),
+
+            const SizedBox(height: TSizes.spaceBtwItems,),
+            const Divider(color: TColors.secondaryColor,),
+            const SizedBox(height: TSizes.spaceBtwItems,),
+
+            /// Heading Personal Info
+            const TSectionHeading(title: "Personal Information",showActionButton: false,textColor: TColors.primaryColor,),
+            const SizedBox(height: TSizes.spaceBtwItems,),
+
+            TProfileMenu(onPressed: (){}, title: "User ID", value: "456789"),
+            TProfileMenu(onPressed: (){}, title: "E-mail", value: "username@gmail.com"),
+            TProfileMenu(onPressed: (){}, title: "Phone Number", value: "0122 545 5546"),
+            TProfileMenu(onPressed: (){}, title: "Date of Birth", value: "1 Oct 2001"),
           ],
         ),
         ),
