@@ -4,17 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:neat/components/Text.dart';
 import 'package:neat/components/color.dart';
+import 'package:neat/components/components.dart';
 import 'package:neat/utlis/constants/colors.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 
 import '../../cubit/app_cubit.dart';
+import '../Task Details Screen/Task Details Screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  final String ReceiverId;
+  final String receiverId;
 
   const HomeScreen({
     super.key,
-    required this.ReceiverId,
+    required this.receiverId,
   });
 
   @override
@@ -160,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   child: Center(
                                                     child: BuildText(
                                                       text:
-                                                          'You have 3 more tasks to do',
+                                                          'You have ${cubit.numberOfTodoTasks} more tasks to do',
                                                       color:
                                                           AppColor.secondColor,
                                                       size: 20,
@@ -172,26 +174,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                               ],
                                             )
                                           ],
-                                        ),
-                                        GestureDetector(
-                                          onTap: () {},
-                                          child: Container(
-                                            height: height * .05,
-                                            width: width * .3,
-                                            decoration: BoxDecoration(
-                                              color: AppColor.secondColor,
-                                              borderRadius:
-                                                  BorderRadius.circular(25),
-                                            ),
-                                            child: Center(
-                                              child: BuildText(
-                                                text: "Details",
-                                                color: AppColor.primeColor,
-                                                size: 17.5,
-                                                bold: true,
-                                              ),
-                                            ),
-                                          ),
                                         ),
                                       ],
                                     ),
@@ -240,14 +222,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget BuilderTasksList() {
-    var height = MediaQuery.of(context).size.height;
-    var width = MediaQuery.of(context).size.width;
-
-    String SenderId = AppCubit.get(context).getCurrentUser()!.uid;
+    String senderId = AppCubit.get(context).getCurrentUser()!.uid;
 
     return StreamBuilder(
-      stream: AppCubit.get(context).getTasksStream(SenderId, widget.ReceiverId),
+      stream: AppCubit.get(context).getTasksStream(senderId, widget.receiverId),
       builder: (context, snapshot) {
+        AppCubit.get(context)
+            .getTasksStream(senderId, widget.receiverId)
+            .listen((event) {
+          AppCubit.get(context).numberOfTodoTasks = event.docs.length;
+        });
         if (snapshot.hasError) {
           return const Text('error');
         }
@@ -259,8 +243,9 @@ class _HomeScreenState extends State<HomeScreen> {
             color: AppColor.primeColor,
           );
         }
-        return ListView(
-
+        return GridView(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2, childAspectRatio: 1.5),
           children:
               snapshot.data!.docs.map((doc) => BuildtaskListItem(doc)).toList(),
         );
@@ -273,54 +258,58 @@ class _HomeScreenState extends State<HomeScreen> {
     var height = MediaQuery.of(context).size.height;
     var width = MediaQuery.of(context).size.width;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10, right: 12, left: 12),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: width * .2,
-          minWidth: width * .1,
-        ),
-        child: Container(
-          height: height * .1,
-          decoration: BoxDecoration(
-              color: AppColor.secondColor,
-              borderRadius: BorderRadius.circular(25)),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Icon(
-                Icons.note_sharp,
-                color: AppColor.primeColor,
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                      width: width * .2,
-                      child: BuildText(
-                        text: taskData['name'],
-                        size: 17.5,
-                        bold: true,
-                        color: AppColor.primeColor,
-                        maxLines: 2,
-                      )),
-                  SizedBox(
-                    width: width * .2,
-                    child: BuildText(
-                      text: taskData.length.toString(),
-                      size: 17.5,
-                      color: AppColor.primeColor,
-                      maxLines: 2,
-                    ),
-                  ),
-                ],
-              ),
-              Icon(
-                Icons.file_copy_outlined,
-                color: AppColor.primeColor,
-              )
-            ],
+    return GestureDetector(
+      onTap: () async {
+        navigateTo(
+            context,
+            taskDetailsScreen(
+              name: taskData['name'],
+              description: taskData['description'],
+              deadline: taskData['deadline'],
+              // status: taskData['status'],
+              senderID: taskData['senderId'],
+              senderName: taskData['senderName'],
+              senderEmail: taskData['senderEmail'],
+              senderPhone: taskData['senderPhoneNumber'],
+              taskId: taskData['id'],
+            ));
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10, right: 12, left: 12),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: width * .2,
+            minWidth: width * .05,
+          ),
+          child: Container(
+            height: height * .1,
+            decoration: BoxDecoration(
+                color: AppColor.secondColor,
+                borderRadius: BorderRadius.circular(25)),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Icon(
+                  Icons.note_sharp,
+                  color: AppColor.primeColor,
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                        width: width * .2,
+                        child: BuildText(
+                          text: taskData['name'],
+                          size: 17.5,
+                          bold: true,
+                          color: AppColor.primeColor,
+                          maxLines: 2,
+                        )),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

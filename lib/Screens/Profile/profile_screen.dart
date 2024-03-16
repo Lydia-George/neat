@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:neat/Screens/Profile/edit_profile_screen.dart';
+import 'package:neat/Screens/chat/chat_screen.dart';
 import 'package:neat/common/widgets/appbar/appbar.dart';
 import 'package:neat/common/widgets/custom_shapes/containers/primary_header_container.dart';
 import 'package:neat/common/widgets/list_tiles/settings_menu_tile.dart';
@@ -9,6 +12,7 @@ import 'package:neat/common/widgets/texts/section_heading.dart';
 import 'package:neat/components/components.dart';
 import 'package:neat/utlis/constants/colors.dart';
 import 'package:neat/utlis/constants/sizes.dart';
+import 'package:provider/provider.dart';
 
 import '../../components/Text.dart';
 import '../../components/color.dart';
@@ -61,6 +65,7 @@ class ProfileScreen extends StatelessWidget {
                   showActionButton: false,
                   textColor: TColors.primaryColor,
                 ),
+
                 const SizedBox(height: TSizes.spaceBtwItems,),
                 Container(
                   height: height * .225,
@@ -130,7 +135,9 @@ class ProfileScreen extends StatelessWidget {
                   height: height * .03,
                 ),
 
-                TSettingsMenuTile(icon: Iconsax.user, title: "Account Information",onTap: (){},),
+                TSettingsMenuTile(icon: Iconsax.user, title: "Account Information",onTap: (){
+                  navigateTo(context, ChatScreen());
+                },),
                 const SizedBox(height: TSizes.spaceBtwItems,),
                 const TSettingsMenuTile(icon: Icons.language, title: "Language"),
                 const SizedBox(height: TSizes.spaceBtwItems,),
