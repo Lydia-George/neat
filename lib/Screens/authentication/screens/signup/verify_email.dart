@@ -20,12 +20,12 @@ class VerifyEmailScreen extends StatelessWidget {
         backgroundColor: TColors.backgroundColor,
         automaticallyImplyLeading: false,
         actions: [
-          IconButton(onPressed: () {}, icon: Icon(CupertinoIcons.clear))
+          IconButton(onPressed: () {}, icon: const Icon(CupertinoIcons.clear))
         ],
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.all(TSizes.defaultSpace),
+          padding: const EdgeInsets.all(TSizes.defaultSpace),
           child: Column(
             children: [
               /// Image
@@ -76,16 +76,14 @@ class VerifyEmailScreen extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                         backgroundColor: TColors.primaryColor),
                     onPressed: () {
-                      navigateTo(
-                          context,
-                          SuccessScreen(
-                            image: TImages.staticSuccessIllustration,
-                            title: TText.yourAccountCreatedTitle,
-                            subTitle: TText.yourAccountCreatedSubTitle,
-                            onPressed: () {
-                              navigateTo(context, const LoginScreen());
-                            },
-                          ));
+                      navigateTo(context, SuccessScreen(
+                        image: TImages.staticSuccessIllustration,
+                        title: TText.yourAccountCreatedTitle,
+                        subTitle: TText.yourAccountCreatedSubTitle,
+                        onPressed: () {
+                          navigateTo(context, const LoginScreen());
+                        },
+                      ));
                     },
                     child: const Text(
                       TText.tContinue,

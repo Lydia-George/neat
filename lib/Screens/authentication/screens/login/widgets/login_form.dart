@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:iconsax/iconsax.dart';
 import 'package:neat/Screens/Home/home.dart';
@@ -7,24 +8,34 @@ import 'package:neat/Screens/authentication/screens/signup/signup_screen.dart';
 import 'package:neat/components/components.dart';
 
 
+import '../../../../../cubit/app_cubit.dart';
 import '../../../../../utlis/constants/colors.dart';
 import '../../../../../utlis/constants/sizes.dart';
 import '../../../../../utlis/constants/text_strings.dart';
 class LoginForm extends StatelessWidget {
-  const LoginForm({
+   LoginForm({
     super.key,
   });
-
+  TextEditingController email = TextEditingController();
+  TextEditingController password = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Form(child: Padding(padding: const EdgeInsets.symmetric(
       vertical: TSizes.spaceBtwSections,
     ),
-      child: Column(
+      child: BlocConsumer<AppCubit, AppState>(
+  listener: (context, state) {
+    // TODO: implement listener
+  },
+  builder: (context, state) {
+    var cubit = AppCubit.get(context);
+    return Column(
         children: [
 
           /// Email
           TextFormField(
+            controller: email,
+            expands: false,
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
              enabledBorder:  OutlineInputBorder(
@@ -56,7 +67,9 @@ class LoginForm extends StatelessWidget {
           const SizedBox(height: TSizes.spaceBtwInputFields,),
           /// -- Password
           TextFormField(
+            controller: password,
             obscureText: true,
+            expands: false,
             decoration: InputDecoration(
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(40),
@@ -99,7 +112,19 @@ class LoginForm extends StatelessWidget {
                   ),
                 ),
                   onPressed: (){
-                  navigateTo(context,MainLayout());
+                  cubit.Login(email: email.text, password: password.text);
+                  if (state is LoginSuccess) {
+                    navigateTo(context,MainLayout());
+                  }
+                  else if (state is LoginFailed){
+                    ScaffoldMessenger.of(context).showSnackBar(
+                     const  SnackBar(
+                        content: Text('error',style: TextStyle(color: Colors.white),),
+                        backgroundColor: Colors.red,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
                   },
                 child: const Text("Log in",style: TextStyle(fontSize: 18,color: Colors.white),),
               ),
@@ -121,14 +146,16 @@ class LoginForm extends StatelessWidget {
 
               /// Create Account
               TextButton(onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => SignupScreen()));
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SignupScreen()));
               }, child: const Text(TText.createAccount,style: TextStyle(color: TColors.primaryColor),)),
             ],
           ),
 
 
         ],
-      ),
+      );
+  },
+),
     ));
   }
 }
