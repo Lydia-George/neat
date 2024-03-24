@@ -1,13 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:neat/Models/task%20Model.dart';
 import 'package:neat/Screens/Calender%20Screen/Calender%20Screen.dart';
 import 'package:neat/Screens/Home/home.dart';
 import 'package:neat/Screens/Notification/Notification.dart';
 import '../Screens/Profile/profile_screen.dart';
+import '../main.dart';
 
 part 'app_state.dart';
 
@@ -26,13 +29,66 @@ class AppCubit extends Cubit<AppState> {
   String name = '';
   String email = '';
   String phone = '';
-  String uid = '';
   String title = '';
 
-  var auth = FirebaseAuth.instance;
   var database = FirebaseFirestore.instance;
   var storge = FirebaseStorage.instance;
   var user = FirebaseAuth.instance.currentUser;
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+
+  final CollectionReference tasksRoomsCollection =
+      FirebaseFirestore.instance.collection('tasks_rooms');
+  var auth = FirebaseAuth.instance;
+
+  User? getCurrentUser() {
+    return auth.currentUser;
+  }
+
+
+
+
+  // Future<void> initialize() async {
+  //   // Request permission for notifications
+  //   await _firebaseMessaging.requestPermission();
+  //
+  //   // Get the device's FCM token
+  //   String? token = await _firebaseMessaging.getToken();
+  //   print('FCM Token: $token');
+  //
+  //   // Set up a listener for incoming notifications
+  //   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+  //     if (message.notification != null) {
+  //       showDialog(
+  //         context: navigatorKey.currentContext!,
+  //         builder: (context) {
+  //           return AlertDialog(
+  //             title: Text(message.notification!.title!),
+  //             content: Text(message.notification!.body!),
+  //             actions: [
+  //               TextButton(
+  //                 onPressed: () {
+  //                   Navigator.pop(context);
+  //                 },
+  //                 child: Text('OK'),
+  //               ),
+  //             ],
+  //           );
+  //         },
+  //       );
+  //     }
+  //   });
+  //
+  //   // Set up a background message handler
+  //   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  // }
+
+  // Future<void> _firebaseMessagingBackgroundHandler(
+  //     RemoteMessage message) async {
+  //   if (message.notification != null) {
+  //     print(
+  //         'Background notification received: ${message.notification!.title}/${message.notification!.body}');
+  //   }
+  // }
 
   Future<void> getUserInfo(String uid) async {
     try {
@@ -85,10 +141,6 @@ class AppCubit extends Cubit<AppState> {
       emit(UpdateUserInfoFailed());
       print(e.toString());
     }
-  }
-
-  User? getCurrentUser() {
-    return auth.currentUser;
   }
 
   Future<void> showCalendar(BuildContext context) async {
@@ -154,6 +206,8 @@ class AppCubit extends Cubit<AppState> {
     }
   }
 
+
+
   Stream<QuerySnapshot> getTasksStream(String UserId, otherUserId) {
     List<String> ids = [UserId, otherUserId];
 
@@ -193,6 +247,7 @@ class AppCubit extends Cubit<AppState> {
     required String taskId,
     required String status,
     required String priority,
+
   }) async {
     emit(SendTaskLoading());
     final String currentUserId = auth.currentUser!.uid;
@@ -234,6 +289,31 @@ class AppCubit extends Cubit<AppState> {
 
 
 
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  FlutterLocalNotificationsPlugin();
+
+
+
+  String channelId = 'your_channel_id';
+
+  showNotification( {required String title , required String body}) {
+    AndroidNotificationDetails androidNotificationDetails =
+    AndroidNotificationDetails(channelId, 'Notify my',
+        importance: Importance.high);
+
+    NotificationDetails notificationDetails = NotificationDetails(
+        android: androidNotificationDetails,
+        iOS: null,
+        macOS: null,
+        linux: null);
+
+    flutterLocalNotificationsPlugin.show(
+        01, title, body, notificationDetails);
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> notificationStream =
+  FirebaseFirestore.instance.collection('tasks_rooms').snapshots();
+
 
   List<Widget> pagesNames = [
     const HomeScreen(
@@ -243,6 +323,4 @@ class AppCubit extends Cubit<AppState> {
     const NotificationScreen(),
     const ProfileScreen(),
   ];
-
 }
-

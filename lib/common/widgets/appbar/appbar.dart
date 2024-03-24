@@ -10,7 +10,8 @@ class TAppBar extends StatelessWidget implements PreferredSizeWidget {
         this.leadingIcon,
         this.actions,
         this.leadingOnPressed,
-        this.backgroundColor
+        this.backgroundColor,
+        this.iconColor
       });
 
   final Widget? title;
@@ -19,14 +20,27 @@ class TAppBar extends StatelessWidget implements PreferredSizeWidget {
   final List<Widget>? actions;
   final VoidCallback? leadingOnPressed;
   final Color? backgroundColor;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
     return Padding(padding: const EdgeInsets.symmetric(horizontal: TSizes.md),
       child: AppBar(
+
         backgroundColor: backgroundColor ,
-        automaticallyImplyLeading: true,
-        leading: const Icon(Icons.arrow_back_ios,color: TColors.primaryColor,),
+        automaticallyImplyLeading: false,
+        leading: showBackArrow
+            ?  IconButton(
+          onPressed: () {
+          Navigator.pop(context);
+        },
+
+          icon:Icon(Icons.arrow_back_ios,
+              color: iconColor),)
+        : leadingIcon != null
+            ? IconButton(
+            onPressed: leadingOnPressed,
+            icon: Icon(leadingIcon)) : null,
         title: title,
         actions: actions,
 

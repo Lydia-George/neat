@@ -1,14 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:neat/Models/message.dart';
+import 'package:neat/Models/message_model/message.dart';
 
 class AuthService extends ChangeNotifier {
   /// get instance of auth and firestore
-  FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+ final  FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// get instance of firestore
+  /// get current user
+ User? getCurrentUser(){
+   return _firebaseAuth.currentUser;
+ }
 
   /// sign user in
   Future<UserCredential> signInWithEmailandPassword(
@@ -17,6 +20,13 @@ class AuthService extends ChangeNotifier {
       /// sign in
       UserCredential userCredential = await _firebaseAuth
           .signInWithEmailAndPassword(email: email, password: password);
+
+      /// add a new document for the user in the users collection if it doesn't already exists
+      _firestore.collection('Users').doc(userCredential.user!.uid).set({
+        'uid' : userCredential.user!.uid,
+        'email' : email,
+      }, SetOptions(merge: true));
+
       return userCredential;
     }
 
@@ -26,12 +36,20 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  /// create a new user
+  /// create a new user (Sign up)
   Future<UserCredential> signUpWithEmailandPassword(
       String email, password) async {
     try {
       UserCredential userCredential = await _firebaseAuth
-          .createUserWithEmailAndPassword(email: email, password: password);
+          .createUserWithEmailAndPassword(
+          email: email,
+          password: password);
+
+      /// after creating the user , create a new document for the user in the users collection
+      _firestore.collection('Users').doc(userCredential.user!.uid).set({
+        'uid' : userCredential.user!.uid,
+        'email' : email,
+      });
       return userCredential;
     } on FirebaseAuthException catch (e) {
       throw Exception(e.code);
@@ -44,47 +62,4 @@ class AuthService extends ChangeNotifier {
     return await FirebaseAuth.instance.signOut();
   }
 
-  /// SEND MESSAGE
-  Future<void> sendMessage(String receiverId, String message) async {
-    /// get current user info
-    String currentUserId = _firebaseAuth.currentUser!.uid;
-    final String currentUserEmail = _firebaseAuth.currentUser!.email.toString();
-    final Timestamp timestamp = Timestamp.now();
-
-    /// create a new message
-    Message newMessage = Message(
-        senderId: currentUserId,
-        senderEmail: currentUserEmail,
-        receiverId: receiverId,
-        message: message,
-        timestamp: timestamp);
-
-    /// construct chat room id from current user id and receiver id (sorted to insure uniqueness)
-    List<String> ids = [currentUserId, receiverId];
-    ids.sort(); // sort the ids (this ensures the chat room id is always the same for any pair of people
-    String chatRoomId = ids.join(
-        "_"); // combine the ids into a single string to use as a chatroomID
-
-    /// add new message to database
-    await _firestore
-        .collection('chat_rooms')
-        .doc(chatRoomId)
-        .collection('messages')
-        .add(newMessage.toMap());
-  }
-
-  /// GET MESSAGES
-  Stream<QuerySnapshot> getMessages(String userId, String otherUserId) {
-    /// construct chat room id from user ids (sorted to ensure it matches the id used when sending messages
-    List<String> ids = [userId, otherUserId];
-    ids.sort();
-    String chatRoomId = ids.join("_");
-
-    return _firestore
-        .collection('chat_rooms')
-        .doc(chatRoomId)
-        .collection('messages')
-        .orderBy('timestamp', descending: false)
-        .snapshots();
-  }
 }

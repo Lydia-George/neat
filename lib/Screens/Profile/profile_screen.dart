@@ -1,4 +1,5 @@
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:neat/Screens/Profile/edit_profile_screen.dart';
@@ -51,9 +52,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 /// -- AppBar
                const TAppBar(
-
+                 showBackArrow:false,
                   backgroundColor: TColors.primaryColor,
-
+                 iconColor: TColors.primaryColor,
                 ),
 
                 /// User Profile Card
@@ -118,7 +119,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                         GestureDetector(
-                          onTap: () {},
+                          onTap: () async{
+                            final fcmToken =  await FirebaseMessaging.instance.getToken();
+                            print('token is ${fcmToken}');
+                          },
                           child: Container(
                             height: height * .03,
                             width: width * .3,

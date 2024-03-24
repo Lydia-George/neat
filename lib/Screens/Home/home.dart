@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:neat/Screens/chat/chat_screen.dart';
+import 'package:neat/Screens/chat/users_screen.dart';
 import 'package:neat/common/widgets/appbar/appbar.dart';
 import 'package:neat/common/widgets/custom_shapes/containers/circular_container.dart';
 import 'package:neat/common/widgets/images/circular_image.dart';
@@ -30,6 +32,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
+
   @override
   Widget build(BuildContext context) {
     var height = MediaQuery.of(context).size.height;
@@ -44,15 +48,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
         return Scaffold(
           backgroundColor: TColors.backgroundColor,
-          appBar: AppBar(
-            backgroundColor: TColors.backgroundColor,
-            automaticallyImplyLeading: false,
-            actions: [
-              IconButton(onPressed: (){
-                navigateTo(context,  ChatScreen(receiverUserEmail: '', receiverUserID: '',));
-              }, icon: const Icon(Icons.chat,color: TColors.primaryColor,))
-            ],
-          ),
+          // appBar: AppBar(
+          //   backgroundColor: TColors.backgroundColor,
+          //   automaticallyImplyLeading: false,
+          //   actions: [
+          //
+          //   ],
+          // ),
           body: Padding(
             padding: const EdgeInsets.all(TSizes.defaultSpace),
             child: SingleChildScrollView(
@@ -72,9 +74,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    TCircularImage(image: TImages.user, width: 90,height: 90,),
-
+                                    TCircularImage(
+                                      image: TImages.user,
+                                      width: 90,
+                                      height: 90,
+                                    ),
                                     SizedBox(
                                       width: width * .025,
                                     ),
@@ -94,9 +100,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                           color: AppColor.primeColor,
                                           size: 20,
                                           bold: true,
-                                        )
+                                        ),
                                       ],
                                     ),
+                                    SizedBox(width: width * 0.1),
+                                    /// Chats
+                                    IconButton(
+                                        onPressed: () {
+                                          navigateTo(context, const UsersScreen());
+                                        },
+                                        icon: const Icon(
+                                          Icons.chat,
+                                          color: TColors.primaryColor,
+                                        ))
                                   ],
                                 ),
                                 SizedBox(
@@ -173,13 +189,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   MainAxisAlignment.center,
                                               children: [
                                                 SizedBox(
-                                                  height: TSizes.lg*5,
+                                                  height: TSizes.lg * 5,
                                                   width: width * .4,
                                                   child: Center(
                                                     child: BuildText(
                                                       text:
                                                           'You have ${cubit.numberOfTodoTasks} more tasks to do',
-
                                                       color:
                                                           AppColor.secondColor,
                                                       size: 20,
@@ -237,6 +252,8 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
+
+
 
   Widget BuilderTasksList() {
     String senderId = AppCubit.get(context).getCurrentUser()!.uid;

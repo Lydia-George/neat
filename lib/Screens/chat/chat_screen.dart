@@ -4,13 +4,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:neat/Screens/chat/services/auth_services.dart';
+import 'package:neat/Screens/chat/services/chat_service.dart';
 import 'package:neat/Screens/chat/widgets/chat_box.dart';
 import 'package:neat/Screens/chat/widgets/chat_bubble.dart';
 import 'package:neat/common/widgets/custom_shapes/containers/circular_container.dart';
+import 'package:neat/common/widgets/drawer/drawer.dart';
 import 'package:neat/common/widgets/images/circular_image.dart';
 import 'package:neat/utlis/constants/colors.dart';
 import 'package:neat/utlis/constants/image_strings.dart';
 import 'package:neat/utlis/constants/sizes.dart';
+
 
 class ChatScreen extends StatefulWidget {
   final String receiverUserEmail;
@@ -26,13 +29,18 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  /// text controller
   final TextEditingController _messageController = TextEditingController();
-  final AuthService _chatService = AuthService();
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
+  /// Chat & Auth services
+  final ChatService _chatService = ChatService();
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final AuthService _authService = AuthService();
   void sendMessage() async {
     /// only send message if there is something to send
     if (_messageController.text.isNotEmpty) {
+
+      /// send the message
       await _chatService.sendMessage(
           widget.receiverUserID, _messageController.text);
 
@@ -48,9 +56,11 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         backgroundColor: TColors.primaryColor,
         automaticallyImplyLeading: true,
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-        ),
+        leading: IconButton(onPressed: (){
+          Navigator.pop(context);
+        }, icon: const Icon(Icons.arrow_back_ios_new,
+          color: Colors.white,)),
+
         shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(15),
@@ -80,6 +90,7 @@ class _ChatScreenState extends State<ChatScreen> {
               )),
         ],
       ),
+
       body: SafeArea(
           child: Padding(
         padding: const EdgeInsets.all(TSizes.defaultSpace),
@@ -87,7 +98,7 @@ class _ChatScreenState extends State<ChatScreen> {
           mainAxisAlignment: MainAxisAlignment.end,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            /// Messages
+            /// display all Messages
             Expanded(
               child: _buildMessageList(),
             ),
@@ -102,6 +113,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   /// build Message List
   Widget _buildMessageList() {
+    String senderID = _authService.getCurrentUser()!.uid;
     return StreamBuilder(
         stream: _chatService.getMessages(
             widget.receiverUserID, _firebaseAuth.currentUser!.uid),
