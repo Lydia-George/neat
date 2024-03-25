@@ -30,22 +30,22 @@ class _UsersScreenState extends State<UsersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: TColors.backgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: Column(
         children: [
-          TPrimaryHeaderContainer(
+          const TPrimaryHeaderContainer(
             child: Column(
               children: [
                 TAppBar(
                   showBackArrow: true,
                   iconColor: TColors.backgroundColor,
                   backgroundColor: TColors.primaryColor,
-                  title: const Text(
+                  title: Text(
                     "Chats",
                     style: TextStyle(color: TColors.backgroundColor),
                   ),
                 ),
-                const SizedBox(
+                SizedBox(
                   height: TSizes.spaceBtwSections,
                 ),
               ],
@@ -96,7 +96,7 @@ class _UsersScreenState extends State<UsersScreen> {
         
         padding: const EdgeInsets.all(8.0),
         child: TCircularContainer(
-          backgroundColor: TColors.primaryColor,
+
           child: UserTile(
             text:
               userData['name'],
