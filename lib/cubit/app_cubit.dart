@@ -1,16 +1,19 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:neat/Models/task%20Model.dart';
-import 'package:neat/Screens/Calender%20Screen/Calender%20Screen.dart';
-import 'package:neat/Screens/Home/home.dart';
-import 'package:neat/Screens/Notification/Notification.dart';
-import '../Screens/Profile/profile_screen.dart';
-import '../main.dart';
+import 'package:neat/User%20Screens/Screens/Home/home.dart';
+import 'package:neat/Admin%20Screens/Task%20template%20Screen.dart';
+
+import '../Admin Screens/Home/home.dart';
+import '../User Screens/Screens/Calender Screen/Calender Screen.dart';
+import '../User Screens/Screens/Notification/Notification.dart';
+import '../User Screens/Screens/Profile/profile_screen.dart';
 
 part 'app_state.dart';
 
@@ -30,11 +33,13 @@ class AppCubit extends Cubit<AppState> {
   String email = '';
   String phone = '';
   String title = '';
+  String userImage = '';
 
   var database = FirebaseFirestore.instance;
   var storge = FirebaseStorage.instance;
   var user = FirebaseAuth.instance.currentUser;
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+
 
   final CollectionReference tasksRoomsCollection =
       FirebaseFirestore.instance.collection('tasks_rooms');
@@ -43,52 +48,6 @@ class AppCubit extends Cubit<AppState> {
   User? getCurrentUser() {
     return auth.currentUser;
   }
-
-
-
-
-  // Future<void> initialize() async {
-  //   // Request permission for notifications
-  //   await _firebaseMessaging.requestPermission();
-  //
-  //   // Get the device's FCM token
-  //   String? token = await _firebaseMessaging.getToken();
-  //   print('FCM Token: $token');
-  //
-  //   // Set up a listener for incoming notifications
-  //   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-  //     if (message.notification != null) {
-  //       showDialog(
-  //         context: navigatorKey.currentContext!,
-  //         builder: (context) {
-  //           return AlertDialog(
-  //             title: Text(message.notification!.title!),
-  //             content: Text(message.notification!.body!),
-  //             actions: [
-  //               TextButton(
-  //                 onPressed: () {
-  //                   Navigator.pop(context);
-  //                 },
-  //                 child: Text('OK'),
-  //               ),
-  //             ],
-  //           );
-  //         },
-  //       );
-  //     }
-  //   });
-  //
-  //   // Set up a background message handler
-  //   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  // }
-
-  // Future<void> _firebaseMessagingBackgroundHandler(
-  //     RemoteMessage message) async {
-  //   if (message.notification != null) {
-  //     print(
-  //         'Background notification received: ${message.notification!.title}/${message.notification!.body}');
-  //   }
-  // }
 
   Future<void> getUserInfo(String uid) async {
     try {
@@ -105,6 +64,7 @@ class AppCubit extends Cubit<AppState> {
         final String userPhone = data['phone'] as String;
         final String userUid = data['uid'] as String;
         final String Title = data['title'] as String;
+        String? image = data['image link'] ?? '';
 
         name = userName;
         id = userUid;
@@ -112,6 +72,7 @@ class AppCubit extends Cubit<AppState> {
         phone = userPhone;
         title = Title;
         uid = userUid;
+        userImage = image!;
 
         emit(GetUserInfoSuccess());
       }
@@ -136,6 +97,7 @@ class AppCubit extends Cubit<AppState> {
       } else if (valueName == 'phone') {
         phone = newValue;
       }
+
       emit(UpdateUserInfoSuccess());
     } catch (e) {
       emit(UpdateUserInfoFailed());
@@ -176,7 +138,9 @@ class AppCubit extends Cubit<AppState> {
         'uid': userCredential.user!.uid,
         'title': title,
         'phone': phone,
+        'image link': image ?? 'null',
       });
+      getUserInfo(userCredential.user!.uid);
       emit(RegisterSuccess());
 
       return userCredential;
@@ -196,8 +160,11 @@ class AppCubit extends Cubit<AppState> {
           email: email, password: password);
 
       emit(LoginSuccess());
-      getUserInfo(user!.uid);
+      id = user!.uid;
 
+      getUserInfo(id);
+
+      print(id);
       return userCredential;
     } on FirebaseAuthException catch (e) {
       emit(LoginFailed());
@@ -208,46 +175,20 @@ class AppCubit extends Cubit<AppState> {
 
 
 
-  Stream<QuerySnapshot> getTasksStream(String UserId, otherUserId) {
-    List<String> ids = [UserId, otherUserId];
-
-    ids.sort();
-    String taskRoomId = ids.join('_');
-
-    return database
-        .collection('tasks_rooms')
-        .doc(taskRoomId)
-        .collection('tasks')
-        .snapshots();
-  }
-
-  // Stream<QuerySnapshot> getUserInfoStream(String UserId, otherUserId) {
-  //   List<String> ids = [ UserId , otherUserId];
-  //
-  //
-  //   ids.sort();
-  //   String taskRoomId = ids.join('_');
-  //
-  //   return database
-  //       .collection('tasks_rooms')
-  //       .doc(taskRoomId)
-  //       .collection('tasks')
-  //       .snapshots();
-  // }
-
   Future<void> sendTask({
     required String receiverID,
     required String senderID,
     required String title,
     required String description,
-    required String deadline,
     required String senderName,
     required String senderPhone,
     required String taskName,
     required String taskId,
     required String status,
     required String priority,
-
+    required int day,
+    required int month,
+    required int year,
   }) async {
     emit(SendTaskLoading());
     final String currentUserId = auth.currentUser!.uid;
@@ -263,16 +204,17 @@ class AppCubit extends Cubit<AppState> {
         receiverId: receiverID,
         description: description,
         date: timeStamp.toString(),
-        deadline: deadline,
         status: status,
-        priority: priority);
+        priority: priority,
 
-    List<String> ids = [currentUserId, receiverID];
-    ids.sort();
-    String taskRoomId = ids.join('_');
+      day: day,
+        year: year,
+        month: month,
+        );
+
     await database
         .collection("tasks_rooms")
-        .doc(taskRoomId)
+        .doc('taskRoomId')
         .collection('tasks')
         .add(tasks.task())
         .then((value) {
@@ -285,21 +227,52 @@ class AppCubit extends Cubit<AppState> {
       print(onError.toString());
     });
   }
+  Stream<QuerySnapshot> getTasksStream() {
+    return database
+        .collection('tasks_rooms')
+        .doc('taskRoomId')
+        .collection('tasks')
+        .where('receiverId', isEqualTo: id)
+        .snapshots();
+  }
+  List<Tasks> tasksCalendar = [];
+  Future<void> getTasksInCalender(int day, int month, int year) async{
+    Stream<QuerySnapshot<Map<String, dynamic>>> notificationStream =
+    FirebaseFirestore.instance
+        .collection('tasks_rooms')
+        .doc('taskRoomId')
+        .collection('tasks')
+        .where('receiverId', isEqualTo: id)
+        .snapshots();
+    emit(GetCalenderTasks());
 
+     notificationStream.listen((snapshot) {
+      List<Tasks> tasks = [];
+      for (var doc in snapshot.docs) {
+        Map<String, dynamic> data = doc.data();
+        Tasks task = Tasks.fromJson(data);
 
+        if (task.year == year && task.month == month && task.day == day) {
+          tasks.add(task);
+          emit(AddToCalenderTasksList());
+        }
+      }
 
+      tasksCalendar = tasks;
+      emit(EqualityBetweenTheTwoLists());
+
+    });
+  }
 
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin();
-
-
+      FlutterLocalNotificationsPlugin();
 
   String channelId = 'your_channel_id';
 
-  showNotification( {required String title , required String body}) {
+  showNotification({required String title, required String body}) {
     AndroidNotificationDetails androidNotificationDetails =
-    AndroidNotificationDetails(channelId, 'Notify my',
-        importance: Importance.high);
+        AndroidNotificationDetails(channelId, 'Notify my',
+            importance: Importance.high);
 
     NotificationDetails notificationDetails = NotificationDetails(
         android: androidNotificationDetails,
@@ -307,20 +280,69 @@ class AppCubit extends Cubit<AppState> {
         macOS: null,
         linux: null);
 
-    flutterLocalNotificationsPlugin.show(
-        01, title, body, notificationDetails);
+    flutterLocalNotificationsPlugin.show(01, title, body, notificationDetails);
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> notificationStream =
-  FirebaseFirestore.instance.collection('tasks_rooms').snapshots();
+      FirebaseFirestore.instance.collection('tasks_rooms').snapshots();
 
+  // chat
 
-  List<Widget> pagesNames = [
-    const HomeScreen(
+  Future<String> uploadImageToStorage(String childName, Uint8List file) async {
+    Reference ref = _storage.ref().child(childName);
+    UploadTask uploadTask = ref.putData(file);
+    TaskSnapshot snapshot = await uploadTask;
+    String downloadUrl = await snapshot.ref.getDownloadURL();
+    return downloadUrl;
+  }
+
+  Future<void> saveData({
+    required Uint8List file,
+  }) async {
+    emit(AddDataLoading());
+
+    try {
+      String imageUrl = await uploadImageToStorage('profileImage', file);
+      await database.collection('Users').add({
+        'image link': imageUrl,
+      });
+      emit(AddDataSuccess());
+    } catch (err) {
+      print(err.toString());
+      emit(AddDataFailed());
+    }
+  }
+
+  //chat
+
+  List<Widget> pagesNames = const [
+    HomeScreen(
       receiverId: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',
     ),
-    CalenderScreen(),
-    const NotificationScreen(),
-    const ProfileScreen(),
+    CalenderScreen(
+      uid: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',
+    ),
+    NotificationScreen(
+      uid: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',
+    ),
+    ProfileScreen(
+      uid: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',
+    ),
+  ];
+
+  List<Widget> adminPagesNames = const [
+    adminHomeScreen(
+      receiverId: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',
+    ),
+    CalenderScreen(
+      uid: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',
+    ),
+    TaskTemplateScreen(senderID: 'fiyT0flMHFdXHuotIjgREGNczkP2',),
+    NotificationScreen(
+      uid: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',
+    ),
+    ProfileScreen(
+      uid: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',
+    ),
   ];
 }

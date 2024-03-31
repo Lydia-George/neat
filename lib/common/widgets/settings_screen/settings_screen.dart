@@ -45,15 +45,15 @@ class SettingsScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(8.0),
                     child: Icon(
                       isDarkMode
-                          ? Icons.dark_mode_outlined
-                          : CupertinoIcons.sun_max,
+                          ?CupertinoIcons.sun_max
+                          : Icons.dark_mode_outlined,
                       color: isDarkMode
                           ? TColors.primaryColor
                           : TColors.secondaryColor,
                       size: 27,
                     ),
                   ),
-                  SizedBox(
+                  const SizedBox(
                     width: TSizes.spaceBtwItems,
                   ),
                   Text(
