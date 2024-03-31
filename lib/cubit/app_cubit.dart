@@ -2,18 +2,16 @@ import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:neat/Models/task%20Model.dart';
-import 'package:neat/User%20Screens/Screens/Home/home.dart';
-import 'package:neat/Admin%20Screens/Task%20template%20Screen.dart';
-
-import '../Admin Screens/Home/home.dart';
-import '../User Screens/Screens/Calender Screen/Calender Screen.dart';
-import '../User Screens/Screens/Notification/Notification.dart';
-import '../User Screens/Screens/Profile/profile_screen.dart';
+import 'package:neat/Screens/Calender%20Screen/Calender%20Screen.dart';
+import 'package:neat/Screens/Home/home.dart';
+import 'package:neat/Screens/Notification/Notification.dart';
+import '../Screens/Profile/profile_screen.dart';
 
 part 'app_state.dart';
 
@@ -40,6 +38,7 @@ class AppCubit extends Cubit<AppState> {
   var user = FirebaseAuth.instance.currentUser;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
   final CollectionReference tasksRoomsCollection =
       FirebaseFirestore.instance.collection('tasks_rooms');
@@ -173,22 +172,30 @@ class AppCubit extends Cubit<AppState> {
     }
   }
 
-
+  Stream<QuerySnapshot> getTasksStream() {
+    return database
+        .collection('tasks_rooms')
+        .doc('taskRoomId')
+        .collection('tasks')
+        .where('receiverId', isEqualTo: id)
+        .snapshots();
+  }
 
   Future<void> sendTask({
     required String receiverID,
     required String senderID,
     required String title,
     required String description,
+    required String deadline,
     required String senderName,
     required String senderPhone,
     required String taskName,
     required String taskId,
     required String status,
     required String priority,
-    required int day,
-    required int month,
-    required int year,
+    required String day,
+    required String month,
+    required String year,
   }) async {
     emit(SendTaskLoading());
     final String currentUserId = auth.currentUser!.uid;
@@ -206,11 +213,9 @@ class AppCubit extends Cubit<AppState> {
         date: timeStamp.toString(),
         status: status,
         priority: priority,
-
-      day: day,
         year: year,
         month: month,
-        );
+        day: day);
 
     await database
         .collection("tasks_rooms")
@@ -225,42 +230,6 @@ class AppCubit extends Cubit<AppState> {
       emit(SendTaskFailed());
       print('error');
       print(onError.toString());
-    });
-  }
-  Stream<QuerySnapshot> getTasksStream() {
-    return database
-        .collection('tasks_rooms')
-        .doc('taskRoomId')
-        .collection('tasks')
-        .where('receiverId', isEqualTo: id)
-        .snapshots();
-  }
-  List<Tasks> tasksCalendar = [];
-  Future<void> getTasksInCalender(int day, int month, int year) async{
-    Stream<QuerySnapshot<Map<String, dynamic>>> notificationStream =
-    FirebaseFirestore.instance
-        .collection('tasks_rooms')
-        .doc('taskRoomId')
-        .collection('tasks')
-        .where('receiverId', isEqualTo: id)
-        .snapshots();
-    emit(GetCalenderTasks());
-
-     notificationStream.listen((snapshot) {
-      List<Tasks> tasks = [];
-      for (var doc in snapshot.docs) {
-        Map<String, dynamic> data = doc.data();
-        Tasks task = Tasks.fromJson(data);
-
-        if (task.year == year && task.month == month && task.day == day) {
-          tasks.add(task);
-          emit(AddToCalenderTasksList());
-        }
-      }
-
-      tasksCalendar = tasks;
-      emit(EqualityBetweenTheTwoLists());
-
     });
   }
 
@@ -317,32 +286,16 @@ class AppCubit extends Cubit<AppState> {
 
   List<Widget> pagesNames = const [
     HomeScreen(
-      receiverId: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',
+      receiverId: '',
     ),
     CalenderScreen(
-      uid: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',
+      uid: '',
     ),
     NotificationScreen(
-      uid: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',
+      uid: '',
     ),
     ProfileScreen(
-      uid: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',
-    ),
-  ];
-
-  List<Widget> adminPagesNames = const [
-    adminHomeScreen(
-      receiverId: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',
-    ),
-    CalenderScreen(
-      uid: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',
-    ),
-    TaskTemplateScreen(senderID: 'fiyT0flMHFdXHuotIjgREGNczkP2',),
-    NotificationScreen(
-      uid: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',
-    ),
-    ProfileScreen(
-      uid: 'aiQxoxrg5zPLIQ7NniWdyUFnwmF2',
+      uid: '',
     ),
   ];
 }

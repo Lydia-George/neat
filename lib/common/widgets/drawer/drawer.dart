@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:neat/Screens/Profile/profile_screen.dart';
 import 'package:neat/components/components.dart';
 import 'package:neat/utlis/constants/colors.dart';
 
-import '../../../User Screens/Screens/Profile/profile_screen.dart';
-import '../../../User Screens/Screens/chat/services/auth_services.dart';
-
+import '../../../Screens/chat/services/auth_services.dart';
 
 class TDrawer extends StatelessWidget {
   const TDrawer({super.key});
@@ -21,7 +20,7 @@ class TDrawer extends StatelessWidget {
       child: Column(
         children: [
           /// Logo
-          const DrawerHeader(
+          DrawerHeader(
               child: Icon(
                 Icons.task_outlined,
                 color: TColors.primaryColor,
@@ -29,30 +28,30 @@ class TDrawer extends StatelessWidget {
               )),
 
           /// home list tile
-          Padding(padding: const EdgeInsets.only(left: 25.0),
+          Padding(padding: EdgeInsets.only(left: 25.0),
           child: ListTile(
-            title: const Text("H O M E "),
-            leading: const Icon(Icons.home),
+            title: Text("H O M E "),
+            leading: Icon(Icons.home),
             onTap: (){
               Navigator.pop(context);
             },
           ),
           ),
           /// settings list tile
-          Padding(padding: const EdgeInsets.only(left: 25.0),
+          Padding(padding: EdgeInsets.only(left: 25.0),
             child: ListTile(
-              title: const Text("S E T T I N G S"),
-              leading: const Icon(Icons.settings),
+              title: Text("S E T T I N G S"),
+              leading: Icon(Icons.settings),
               onTap: (){
-                navigateTo(context, const ProfileScreen(uid: '',));
+                navigateTo(context, ProfileScreen(uid: '',));
               },
             ),
           ),
           /// logout list tile
-          Padding(padding: const EdgeInsets.only(left: 25.0, bottom: 25),
+          Padding(padding: EdgeInsets.only(left: 25.0, bottom: 25),
             child: ListTile(
-              title: const Text("L O G O U T"),
-              leading:const  Icon(Icons.logout),
+              title: Text("L O G O U T"),
+              leading: Icon(Icons.logout),
               onTap: signOut
             ),
           ),
