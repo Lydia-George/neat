@@ -1,7 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,21 +12,20 @@ import 'package:neat/utlis/constants/sizes.dart';
 import 'package:neat/utlis/constants/themes/theme_provider.dart';
 import 'package:path/path.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../common/widgets/images/circular_image.dart';
 import '../../common/widgets/texts/section_heading.dart';
 import '../../cubit/app_cubit.dart';
 import '../../utlis/constants/colors.dart';
 import '../../utlis/constants/image_strings.dart';
 
-class EditProfileScreen extends StatefulWidget {
-  const EditProfileScreen({super.key});
+class EditProfilePicScreen extends StatefulWidget {
+  const EditProfilePicScreen({super.key});
 
   @override
-  State<EditProfileScreen> createState() => _EditProfileScreenState();
+  State<EditProfilePicScreen> createState() => _EditProfilePicScreenState();
 }
 
-class _EditProfileScreenState extends State<EditProfileScreen> {
+class _EditProfilePicScreenState extends State<EditProfilePicScreen> {
   TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
@@ -35,39 +34,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   File? file;
   String? url;
 
-  // late SharedPreferences _prefs;
-  // late String _photoUrl;
-  var database = FirebaseFirestore.instance;
-
-  @override
-  void initState() {
-    super.initState();
-    // _initPrefs();
-    //  _loadPhotoUrl();
-  }
-
-  // _initPrefs() async{
-  //   _prefs = await SharedPreferences.getInstance();
-  // }
-  // _loadPhotoUrl() async{
-  //
-  //   _photoUrl = _prefs.getString('photoUrl') ?? '';
-  //   setState(() {
-  //
-  //   });
-  // }
-  // _savePhotoUrl(String photoUrl) async{
-  //
-  //   await _prefs.setString('photoUrl', photoUrl);
-  //   _photoUrl =photoUrl;
-  // }
-
-  getImageGallery(BuildContext context) async {
+  Future imagePickerMethod() async {
     final ImagePicker picker = ImagePicker();
 
     /// Pick an image.
     final XFile? imageGallery =
-        await picker.pickImage(source: ImageSource.gallery);
+    await picker.pickImage(source: ImageSource.gallery);
     if (imageGallery != null) {
       // if (kDebugMode) {
       //   print('******');
@@ -75,6 +47,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // if (kDebugMode) {
       //   print(imageGallery.path);
       // }
+
       file = File(imageGallery!.path);
       // if (kDebugMode) {
       //   print(imageGallery.path);
@@ -83,6 +56,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       /// start upload
       var random = Random().nextInt(10000000);
+
       imageName = "$random$imageName";
 
       // if (kDebugMode) {
@@ -94,16 +68,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // if (kDebugMode) {
       //   print(imageName);
       // }
-      var refStorage = FirebaseStorage.instance.ref("ProfileImg/$imageName");
-      await refStorage.putFile(file!);
-      url = await refStorage.getDownloadURL();
-      await database
-          .collection('Users')
-          .doc('f1xQHnHVneTjbxT9wMqTlAQutS63')
-          .update({
-        'url': url,
-      });
-      AppCubit.get(context).url = url;
+
       // if (kDebugMode) {
       //   print('url : $url');
       // }
@@ -117,30 +82,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() {
       if (imageGallery != null) {
         file = File(imageGallery.path);
-      } else {
-        showSnackBar("No profile Selected", const Duration(milliseconds: 400));
+      } else{
+        showSnackBar("No profile Selected", Duration(milliseconds:400));
       }
     });
 
-    getImagesAndFolderName() async {
-      var ref = await FirebaseStorage.instance.ref("ProfileImg").list();
-      for (var element in ref.items) {
-        if (kDebugMode) {
-          print("**********");
-        }
-        if (kDebugMode) {
-          print(element.name);
-        }
-      }
-    }
+
+
+
+
+  }
+  showSnackBar(String snackText, Duration d ){
+    final snackBar = SnackBar(content: Text(snackText), duration: d,);
+    ScaffoldMessenger.of(context as BuildContext).showSnackBar(snackBar);
   }
 
-  showSnackBar(String snackText, Duration d) {
-    final snackBar = SnackBar(
-      content: Text(snackText),
-      duration: d,
-    );
-    ScaffoldMessenger.of(context as BuildContext).showSnackBar(snackBar);
+  Future uploadImage() async{
+    Reference ref = FirebaseStorage.instance.ref("ProfileImage/");
+    await ref.putFile(file!);
+    url = await ref.getDownloadURL();
   }
 
   @override
@@ -151,7 +111,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       listener: (context, state) {},
       builder: (context, state) {
         var cubit = AppCubit.get(context);
-        // _loadPhotoUrl();
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.background,
           appBar: AppBar(
@@ -173,7 +132,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             title: const Text("Profile"),
             titleTextStyle: Theme.of(context).textTheme.headlineMedium!.apply(
                 color:
-                    isDarkMode ? TColors.secondaryColor : TColors.primaryColor),
+                isDarkMode ? TColors.secondaryColor : TColors.primaryColor),
           ),
           body: SingleChildScrollView(
             child: Padding(
@@ -187,43 +146,36 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: Column(
                       children: [
                         Stack(children: [
-                          Container(
+                          // _image != null
+                          //     ?
+                          // CircleAvatar(
+                          //   radius: 50,
+                          // ),
+                          if (url != null)
+                            Container(
                               height: 120,
                               width: 120,
                               decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
                               ),
-                              child: cubit.url != null && cubit.url!.isNotEmpty
-                                  ? ClipOval(
-                                      child: Image.network(
-                                        cubit.url!,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    )
-                                  : ClipOval(
-                                      child: Image(
-                                        image: AssetImage(
-                                            'assets/images/user/user.png'),
-                                        fit: BoxFit.cover,
-                                      ),
-                                    )),
+                              child: ClipOval(
+                                  child: Image.network(
+                                    url!,
+                                    fit: BoxFit.cover,
+                                  )),
+                            )
+                          else
+                            const TCircularImage(
+                              image: TImages.user,
+                              width: 120,
+                              height: 120,
+                            ),
                           Positioned(
                             bottom: -10,
                             right: -6,
                             child: IconButton(
-                              onPressed: () async {
-                                final imageUrl = await getImageGallery(context);
-                                if (imageUrl != null) {
-                                  setState(() {
-                                    url = imageUrl;
-                                  });
-                                  // _savePhotoUrl(imageUrl);
-                                }
-                                TCircularImage(
-                                  image: TImages.user,
-                                  height: 120,
-                                  width: 120,
-                                );
+                              onPressed: () {
+                                imagePickerMethod();
                               },
                               icon: const Icon(
                                 Icons.add_a_photo_outlined,
@@ -234,7 +186,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ]),
                         TextButton(
                           onPressed: () {
-                            if (url!.isNotEmpty) Image.network(cubit.url!);
+                            uploadImage();
                           },
                           child: Text(
                             "Change Profile Picture",
@@ -381,10 +333,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                           const Expanded(
                               child: Icon(
-                            Icons.copy_rounded,
-                            size: 18,
-                            color: TColors.primaryColor,
-                          )),
+                                Icons.copy_rounded,
+                                size: 18,
+                                color: TColors.primaryColor,
+                              )),
                         ],
                       ),
                     ),
